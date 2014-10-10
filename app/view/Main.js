@@ -10,25 +10,6 @@ Ext.define('Photo.view.Main', {
 
         items: [
             {
-                title: 'Welcome',
-                iconCls: 'home',
-
-                styleHtmlContent: true,
-                scrollable: true,
-
-                items: {
-                    docked: 'top',
-                    xtype: 'titlebar',
-                    title: 'Welcome to Sencha Touch 2'
-                },
-
-                html: [
-                    "You've just generated a new Sencha Touch 2 project. What you're looking at right now is the ",
-                    "contents of <a target='_blank' href=\"app/view/Main.js\">app/view/Main.js</a> - edit that file ",
-                    "and refresh to change what's rendered here."
-                ].join("")
-            },
-            {
                 title: 'Camera',
                 iconCls: 'action',
                 layout: {
@@ -50,10 +31,58 @@ Ext.define('Photo.view.Main', {
                             function success(image_uri) {
                                 var img = Ext.ComponentQuery.query("image")[0];
                                 img.setSrc(image_uri);
+
+                                var label = Ext.ComponentQuery.query("textareafield")[0];
+                                label.setValue(image_uri);
+
+                                var gotFileEntry = function(fileEntry) {
+                                    var label = Ext.ComponentQuery.query("textareafield")[0];
+                                    label.setValue("Default Image Directory"+fileEntry.fullpath);
+                                    navigator.notification.alert(
+                                        "Default Image Directory "+fileEntry.fullPath,
+                                        null,
+                                        "Message",
+                                        "OK");
+                                    var gotFileSystem = function(fileSystem) {
+                                        fileSystem.root.getDirectory(
+                                            "MyAppFolder",
+                                            { create: true },
+                                            function(dataDir) {
+                                                var d = new Date();
+                                                var n = d.getTime();
+
+                                                var newFileName = n + '.jpg';
+
+                                                var label = Ext.ComponentQuery.query("textareafield")[0];
+                                                label.setValue(fileEntry.fullpath+"\n TO "+dataDir.fullpath);
+
+                                                fileEntry.moveTo(dataDir, newFileName, onSuccess, onFail);
+                                            },
+                                            dirFail
+                                        );
+                                    };
+
+                                    window.requestFileSystem(LocalFileSystem.PERSISTENT,
+                                        0, gotFileSystem, onFail);
+                                };
+
+                                window.resolveLocalFileSystemURI(image_uri, gotFileEntry, onFail);
+
+                                var onDirSuccess = function(dir) {
+                                    navigator.notification.alert("Success "+dir.fullPath, null, "Message", "OK");
+                                }
+
+                                var onFail = function(error) {
+                                    navigator.notification.alert("failed " + error.code, null, "Message", "OK");
+                                }
+
+                                var dirFail = function(error) {
+                                    navigator.notification.alert("Directory " + error.code, null, "Message", "OK");
+                                }
                             }
         
                             function fail(message) {
-                                alert("Failed: " + message);
+                                navigator.notification.alert("Failed: " + message, null, "Message", "OK");
                             }
         
                             navigator.camera.getPicture(success, fail, 
@@ -64,6 +93,12 @@ Ext.define('Photo.view.Main', {
                                 }
                             );
                         }
+                    },
+                    {
+                        xtype: "textareafield",
+                        value: "no photo",
+                        width: "90%",
+                        height:"25%"
                     }
                 ]
             }
