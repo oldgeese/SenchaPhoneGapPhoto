@@ -32,57 +32,47 @@ Ext.define('Photo.view.Main', {
                                 var img = Ext.ComponentQuery.query("image")[0];
                                 img.setSrc(image_uri);
 
-                                var label = Ext.ComponentQuery.query("textareafield")[0];
-                                label.setValue(image_uri);
-
                                 var gotFileEntry = function(fileEntry) {
-                                    var label = Ext.ComponentQuery.query("textareafield")[0];
-                                    label.setValue("Default Image Directory"+fileEntry.fullpath);
-                                    navigator.notification.alert(
-                                        "Default Image Directory "+fileEntry.fullPath,
-                                        null,
-                                        "Message",
-                                        "OK");
-                                    var gotFileSystem = function(fileSystem) {
-                                        fileSystem.root.getDirectory(
+                                    var gotDataDir = function(dataDir) {
+                                        dataDir.getDirectory(
                                             "MyAppFolder",
                                             { create: true },
-                                            function(dataDir) {
+                                            function(dir) {
                                                 var d = new Date();
                                                 var n = d.getTime();
 
                                                 var newFileName = n + '.jpg';
 
                                                 var label = Ext.ComponentQuery.query("textareafield")[0];
-                                                label.setValue(fileEntry.fullpath+"\n TO "+dataDir.fullpath);
+                                                label.setValue(fileEntry.fullPath+"\n TO "+dir.fullPath);
 
-                                                fileEntry.moveTo(dataDir, newFileName, onSuccess, onFail);
+                                                fileEntry.moveTo(dir, newFileName, onSuccess, onFail);
                                             },
                                             dirFail
                                         );
                                     };
 
-                                    window.requestFileSystem(LocalFileSystem.PERSISTENT,
-                                        0, gotFileSystem, onFail);
+                                    window.resolveLocalFileSystemURI(cordova.file.externalDataDirectory
+                                      , gotDataDir, onFail);
                                 };
 
                                 window.resolveLocalFileSystemURI(image_uri, gotFileEntry, onFail);
 
-                                var onDirSuccess = function(dir) {
-                                    navigator.notification.alert("Success "+dir.fullPath, null, "Message", "OK");
+                                var onSuccess = function(dir) {
+                                    //navigator.notification.alert("Success "+dir.fullPath, null);
                                 }
 
                                 var onFail = function(error) {
-                                    navigator.notification.alert("failed " + error.code, null, "Message", "OK");
+                                    navigator.notification.alert("failed " + error.code, null);
                                 }
 
                                 var dirFail = function(error) {
-                                    navigator.notification.alert("Directory " + error.code, null, "Message", "OK");
+                                    navigator.notification.alert("Directory " + error.code, null);
                                 }
                             }
         
                             function fail(message) {
-                                navigator.notification.alert("Failed: " + message, null, "Message", "OK");
+                                navigator.notification.alert("Failed: " + message, null);
                             }
         
                             navigator.camera.getPicture(success, fail, 
